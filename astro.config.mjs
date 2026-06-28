@@ -4,11 +4,14 @@ import sitemap from '@astrojs/sitemap';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-// Manually load .env into process.env for Node.js context at build/dev start
+// Manually load .dev.vars (Cloudflare standard) or .env into process.env for Node.js context
 try {
   const envPath = join(process.cwd(), '.env');
-  if (existsSync(envPath)) {
-    const content = readFileSync(envPath, 'utf8');
+  const devVarsPath = join(process.cwd(), '.dev.vars');
+  const targetPath = existsSync(devVarsPath) ? devVarsPath : (existsSync(envPath) ? envPath : null);
+  
+  if (targetPath) {
+    const content = readFileSync(targetPath, 'utf8');
     content.split(/\r?\n/).forEach(line => {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('#')) return;
@@ -21,11 +24,13 @@ try {
     });
   }
 } catch (e) {
-  console.warn('Failed to load local .env:', e);
+  console.warn('Failed to load local environment secrets:', e);
 }
 
 const envPath = join(process.cwd(), '.env');
-console.log(`[Config] envPath: ${envPath}, exists: ${existsSync(envPath)}`);
+const devVarsPath = join(process.cwd(), '.dev.vars');
+const finalPathExists = existsSync(devVarsPath) || existsSync(envPath);
+console.log(`[Config] Env loaded, target file exists: ${finalPathExists}`);
 console.log(`[Config] Loaded process.env.GITHUB_TOKEN length: ${process.env.GITHUB_TOKEN ? process.env.GITHUB_TOKEN.length : 0}`);
 
 export default defineConfig({

@@ -21,9 +21,13 @@ async function getLocalEnv(): Promise<Record<string, string>> {
     const pathName = "node:path";
     const { existsSync, readFileSync } = await import(/* @vite-ignore */ fsName);
     const { join } = await import(/* @vite-ignore */ pathName);
+    
     const envPath = join(process.cwd(), ".env");
-    if (existsSync(envPath)) {
-      const content = readFileSync(envPath, "utf-8");
+    const devVarsPath = join(process.cwd(), ".dev.vars");
+    const targetPath = existsSync(devVarsPath) ? devVarsPath : (existsSync(envPath) ? envPath : null);
+
+    if (targetPath) {
+      const content = readFileSync(targetPath, "utf-8");
       content.split(/\r?\n/).forEach((line) => {
         const trimmed = line.trim();
         if (!trimmed || trimmed.startsWith("#")) return;

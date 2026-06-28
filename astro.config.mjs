@@ -4,7 +4,7 @@ import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://avinashblog.pages.dev', // Update to your real domain
+  site: 'https://simpleblogapp.pages.dev',
   output: 'static',
   adapter: cloudflare(),
   integrations: [sitemap()],

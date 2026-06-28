@@ -13,8 +13,8 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN as string | undefined;
-const REPO_OWNER = (import.meta.env.GITHUB_REPO_OWNER as string | undefined) ?? "avinash1954";
-const REPO_NAME = (import.meta.env.GITHUB_REPO_NAME as string | undefined) ?? "blogAvinash";
+const REPO_OWNER = (import.meta.env.GITHUB_REPO_OWNER as string | undefined) ?? "avinash-kumar-prajapati-AI";
+const REPO_NAME = (import.meta.env.GITHUB_REPO_NAME as string | undefined) ?? "Blog-space";
 const BRANCH = (import.meta.env.GITHUB_BRANCH as string | undefined) ?? "main";
 
 const BASE_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;

@@ -11,7 +11,9 @@ import { FALLBACK_PROFILE } from '../lib/resumeLoader';
 let profile: Profile = FALLBACK_PROFILE;
 
 try {
-  const activeRole = (await fetchFileContent('media/docs/active-role.txt')).trim();
+  const rawActive = await fetchFileContent('media/docs/active-role.txt');
+  const activeLine = rawActive.split('\n').map(l => l.trim()).find(l => l.startsWith('active:'));
+  const activeRole = activeLine ? activeLine.split(':')[1].trim() : 'software-engineer';
   profile = await fetchJson<Profile>(`media/docs/${activeRole}/profile.json`);
 } catch (e) {
   console.warn('about.astro: could not fetch profile', e);
@@ -156,24 +158,26 @@ const { personal, social, experience, projects, education, skills, certificates,
       </section>
     )}
 
-    <!-- Certificates -->
     {certificates.length > 0 && (
       <section class="about-section" aria-labelledby="cert-heading">
         <h2 id="cert-heading" class="about-section__heading">Certificates</h2>
         <div class="cert-list">
-          {certificates.map(({ name, issuer, date, credentialUrls }) => (
-            <div class="cert-item">
-              <h3 class="cert-item__name">{name}</h3>
-              <p class="cert-item__issuer">{issuer}{date ? ` · ${date}` : ''}</p>
-              <div class="cert-item__links">
-                {credentialUrls.map((url, i) => (
-                  <a href={url} target="_blank" rel="noopener noreferrer" class="cert-link">
-                    Credential {credentialUrls.length > 1 ? i + 1 : ''}
-                  </a>
-                ))}
+          {certificates.map(({ name, issuer, date, credentialUrls, credentialLinks }) => {
+            const links = credentialLinks || (credentialUrls || []).map(url => ({ label: 'Credential', url }));
+            return (
+              <div class="cert-item">
+                <h3 class="cert-item__name">{name}</h3>
+                <p class="cert-item__issuer">{issuer}{date ? ` · ${date}` : ''}</p>
+                <div class="cert-item__links">
+                  {links.map((link, i) => (
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" class="cert-link">
+                      {link.label || `Credential ${links.length > 1 ? i + 1 : ''}`}
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     )}

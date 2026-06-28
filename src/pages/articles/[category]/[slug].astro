@@ -54,10 +54,11 @@ export async function getStaticPaths() {
 const { article, allCategories, recentArticles, allTags, prev, next } = Astro.props;
 const { frontmatter, html, readingTime, slug, category } = article;
 
-const canonicalUrl = new URL(`/articles/${category}/${slug}`, Astro.site).href;
+const siteUrl = Astro.site || 'https://simpleblogapp.pages.dev';
+const canonicalUrl = new URL(`/articles/${category}/${slug}`, siteUrl).href;
 const ogImage = frontmatter.thumbnail
-  ? new URL(frontmatter.thumbnail, Astro.site).href
-  : new URL('/og-default.png', Astro.site).href;
+  ? (frontmatter.thumbnail.startsWith('http') ? frontmatter.thumbnail : new URL(frontmatter.thumbnail, siteUrl).href)
+  : new URL('/og-default.png', siteUrl).href;
 
 const articleSchema = {
   '@context': 'https://schema.org',

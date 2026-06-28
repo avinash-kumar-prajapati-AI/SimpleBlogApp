@@ -47,7 +47,7 @@ const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={new URL(ogImage, Astro.site).href} />
+    <meta property="og:image" content={ogImage.startsWith('http') ? ogImage : new URL(ogImage, Astro.site || 'https://simpleblogapp.pages.dev').href} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:site_name" content={siteName} />
 
@@ -55,7 +55,7 @@ const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={new URL(ogImage, Astro.site).href} />
+    <meta name="twitter:image" content={ogImage.startsWith('http') ? ogImage : new URL(ogImage, Astro.site || 'https://simpleblogapp.pages.dev').href} />
 
     <!-- Sitemap -->
     <link rel="sitemap" href="/sitemap-index.xml" />

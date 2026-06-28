@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config';
-import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -36,7 +35,6 @@ console.log(`[Config] Loaded process.env.GITHUB_TOKEN length: ${process.env.GITH
 export default defineConfig({
   site: 'https://simpleblogapp.pages.dev',
   output: 'static',
-  adapter: cloudflare(),
   integrations: [sitemap()],
   vite: {
     define: {

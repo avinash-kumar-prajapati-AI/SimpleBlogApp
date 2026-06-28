@@ -1,0 +1,223 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Contact"
+  description="Get in touch with AvinashBlog — questions, collaborations, or feedback."
+>
+  <div class="container contact-page">
+    <h1>Contact</h1>
+    <p class="contact-sub">Have a question, found an error, or want to collaborate? Reach out!</p>
+
+    <div class="contact-grid">
+      <!-- Contact form -->
+      <section class="contact-form-section" aria-labelledby="form-heading">
+        <h2 id="form-heading" class="contact-section-heading">Send a Message</h2>
+        <form
+          class="contact-form"
+          name="contact"
+          method="POST"
+          action="https://formspree.io/f/REPLACE_WITH_YOUR_FORMSPREE_ID"
+          aria-label="Contact form"
+        >
+          <div class="form-group">
+            <label for="name" class="form-label">Name <span aria-label="required" class="required">*</span></label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              class="form-input"
+              required
+              autocomplete="name"
+              placeholder="Your name"
+              aria-required="true"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="form-label">Email <span aria-label="required" class="required">*</span></label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-input"
+              required
+              autocomplete="email"
+              placeholder="your@email.com"
+              aria-required="true"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="subject" class="form-label">Subject</label>
+            <input
+              type="text"
+              id="subject"
+              name="subject"
+              class="form-input"
+              placeholder="What's this about?"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="message" class="form-label">Message <span aria-label="required" class="required">*</span></label>
+            <textarea
+              id="message"
+              name="message"
+              class="form-input form-textarea"
+              rows="6"
+              required
+              placeholder="Your message..."
+              aria-required="true"
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary submit-btn" id="contact-submit">
+            Send Message
+          </button>
+          <p id="form-feedback" class="form-feedback" aria-live="polite" hidden></p>
+        </form>
+      </section>
+
+      <!-- Alternative contact -->
+      <section class="contact-info-section" aria-labelledby="info-heading">
+        <h2 id="info-heading" class="contact-section-heading">Other Ways to Reach Me</h2>
+        <div class="contact-info">
+          <div class="contact-info__item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+            <div>
+              <strong>Email</strong>
+              <p>Use the form or reach me directly at your configured email address.</p>
+            </div>
+          </div>
+          <div class="contact-info__item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z"/>
+            </svg>
+            <div>
+              <strong>GitHub</strong>
+              <p>Open an issue or discussion on the blog repository.</p>
+            </div>
+          </div>
+          <div class="contact-info__item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.52 8.52 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
+            </svg>
+            <div>
+              <strong>Twitter / X</strong>
+              <p>Send a DM or mention for quick questions.</p>
+            </div>
+          </div>
+        </div>
+        <p class="contact-response-time">
+          I typically respond within 2–3 business days.
+        </p>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .contact-page {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-20);
+    max-width: 960px;
+  }
+  h1 { font-size: var(--text-4xl); font-weight: var(--weight-bold); margin-bottom: var(--space-3); }
+  .contact-sub { color: var(--color-text-secondary); margin-bottom: var(--space-10); font-size: var(--text-lg); }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-12);
+  }
+  @media (min-width: 768px) {
+    .contact-grid { grid-template-columns: 3fr 2fr; }
+  }
+
+  .contact-section-heading {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-3);
+    border-bottom: 2px solid var(--color-primary);
+  }
+
+  /* Form */
+  .contact-form { display: flex; flex-direction: column; gap: var(--space-5); }
+  .form-group { display: flex; flex-direction: column; gap: var(--space-2); }
+  .form-label { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-primary); }
+  .required { color: var(--color-error); margin-left: 2px; }
+  .form-input {
+    padding: 0.625rem var(--space-3);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    color: var(--color-text-primary);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    width: 100%;
+  }
+  .form-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-muted);
+  }
+  .form-textarea { resize: vertical; min-height: 160px; line-height: var(--leading-relaxed); }
+  .submit-btn { align-self: flex-start; padding: 0.75rem var(--space-6); }
+
+  .form-feedback { font-size: var(--text-sm); color: var(--color-success); margin-top: var(--space-2); }
+
+  /* Contact info */
+  .contact-info { display: flex; flex-direction: column; gap: var(--space-5); margin-bottom: var(--space-6); }
+  .contact-info__item {
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-primary);
+  }
+  .contact-info__item > div { flex: 1; }
+  .contact-info__item strong { display: block; font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-text-primary); margin-bottom: var(--space-1); }
+  .contact-info__item p { font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0; }
+  .contact-response-time { font-size: var(--text-sm); color: var(--color-text-secondary); font-style: italic; }
+</style>
+
+<script>
+  const form = document.querySelector('.contact-form') as HTMLFormElement | null;
+  const submitBtn = document.getElementById('contact-submit') as HTMLButtonElement | null;
+  const feedback = document.getElementById('form-feedback');
+
+  form?.addEventListener('submit', async (e) => {
+    if (!submitBtn || !feedback) return;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' },
+      });
+      if (res.ok) {
+        feedback.textContent = 'Message sent! I'll get back to you soon.';
+        feedback.hidden = false;
+        form.reset();
+      } else {
+        throw new Error('Send failed');
+      }
+    } catch {
+      feedback.textContent = 'Something went wrong. Please try emailing directly.';
+      feedback.hidden = false;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send Message';
+    }
+  });
+</script>

@@ -1,0 +1,22 @@
+---
+/**
+ * TagPill.astro — clickable tag/category pill
+ */
+interface Props {
+  label: string;
+  type?: 'tag' | 'category';
+  href?: string;
+}
+
+const { label, type = 'tag', href } = Astro.props;
+const url = href ?? `/search?q=${encodeURIComponent(type === 'tag' ? `@tag ${label}` : `@category ${label}`)}`;
+---
+
+<a
+  href={url}
+  class={`tag-pill ${type === 'category' ? 'tag-pill--category' : ''}`}
+  aria-label={`Filter by ${type}: ${label}`}
+>
+  {type === 'tag' && <span aria-hidden="true">#</span>}
+  {label}
+</a>

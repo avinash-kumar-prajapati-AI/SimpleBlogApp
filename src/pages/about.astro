@@ -1,0 +1,282 @@
+---
+/**
+ * about.astro — E-E-A-T page: author identity + resume from profile.json
+ * No ads on this page.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { fetchFileContent, fetchJson } from '../lib/github';
+import type { Profile } from '../lib/resumeLoader';
+import { FALLBACK_PROFILE } from '../lib/resumeLoader';
+
+let profile: Profile = FALLBACK_PROFILE;
+
+try {
+  const activeRole = (await fetchFileContent('media/docs/active-role.txt')).trim();
+  profile = await fetchJson<Profile>(`media/docs/${activeRole}/profile.json`);
+} catch (e) {
+  console.warn('about.astro: could not fetch profile', e);
+}
+
+const { personal, social, experience, projects, education, skills, certificates, achievements } = profile;
+---
+
+<BaseLayout
+  title="About"
+  description={`About ${personal.name} — ${personal.title}`}
+  ogType="website"
+>
+  <div class="container about-page">
+    <!-- Author identity (E-E-A-T) -->
+    <section class="about-hero" aria-label="Author profile">
+      <div class="about-hero__content">
+        {personal.avatar && (
+          <img
+            src={personal.avatar}
+            alt={`Photo of ${personal.name}`}
+            width="120" height="120"
+            class="about-hero__avatar"
+            loading="eager"
+          />
+        )}
+        <div class="about-hero__info">
+          <h1 class="about-hero__name">{personal.name}</h1>
+          <p class="about-hero__title">{personal.title}</p>
+          {personal.location && <p class="about-hero__location">📍 {personal.location}</p>}
+          <p class="about-hero__bio">{personal.bio}</p>
+          <div class="about-hero__socials">
+            {social.map(({ platform, url }) => (
+              <a href={url} target="_blank" rel="noopener noreferrer" class="btn btn-ghost about-social-btn">
+                {platform}
+              </a>
+            ))}
+            {personal.email && (
+              <a href={`mailto:${personal.email}`} class="btn btn-ghost about-social-btn">Email</a>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About the Blog -->
+    <section class="about-section" aria-labelledby="blog-purpose-heading">
+      <h2 id="blog-purpose-heading" class="about-section__heading">About This Blog</h2>
+      <p class="about-section__text">
+        This blog documents my learning journey and professional insights in software engineering, AI, cloud infrastructure, and developer tooling. Every article is written from hands-on experience — the same skills I use in my day-to-day engineering work.
+      </p>
+    </section>
+
+    <!-- Experience -->
+    {experience.length > 0 && (
+      <section class="about-section" aria-labelledby="exp-heading">
+        <h2 id="exp-heading" class="about-section__heading">Experience</h2>
+        <div class="timeline">
+          {experience.map(({ company, role, duration, description, highlights }) => (
+            <div class="timeline__item">
+              <div class="timeline__dot" aria-hidden="true"></div>
+              <div class="timeline__content">
+                <h3 class="timeline__role">{role}</h3>
+                <p class="timeline__company">{company} · {duration}</p>
+                <p class="timeline__desc">{description}</p>
+                {highlights && highlights.length > 0 && (
+                  <ul class="timeline__highlights">
+                    {highlights.map((h) => <li>{h}</li>)}
+                  </ul>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Projects -->
+    {projects.length > 0 && (
+      <section class="about-section" aria-labelledby="proj-heading">
+        <h2 id="proj-heading" class="about-section__heading">Projects</h2>
+        <div class="project-grid">
+          {projects.map(({ name, description, url, blogUrl, tech }) => (
+            <div class="project-card card">
+              <h3 class="project-card__name">{name}</h3>
+              <p class="project-card__desc">{description}</p>
+              {tech && (
+                <div class="project-card__tech">
+                  {tech.map((t) => <span class="tag-pill">{t}</span>)}
+                </div>
+              )}
+              <div class="project-card__links">
+                {url && <a href={url} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">View →</a>}
+                {blogUrl && <a href={blogUrl} class="btn btn-ghost">Blog post →</a>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Skills -->
+    {skills.length > 0 && (
+      <section class="about-section" aria-labelledby="skills-heading">
+        <h2 id="skills-heading" class="about-section__heading">Skills</h2>
+        <div class="skills-grid">
+          {[...new Set(skills.map((s) => s.category))].map((cat) => (
+            <div class="skills-category">
+              <h3 class="skills-category__name">{cat}</h3>
+              <div class="skills-category__pills">
+                {skills
+                  .filter((s) => s.category === cat)
+                  .map(({ name, repoUrl }) => (
+                    repoUrl
+                      ? <a href={repoUrl} target="_blank" rel="noopener noreferrer" class="tag-pill">{name}</a>
+                      : <span class="tag-pill">{name}</span>
+                  ))
+                }
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Education -->
+    {education.length > 0 && (
+      <section class="about-section" aria-labelledby="edu-heading">
+        <h2 id="edu-heading" class="about-section__heading">Education</h2>
+        <div class="edu-list">
+          {education.map(({ institution, degree, year, url }) => (
+            <div class="edu-item">
+              <h3 class="edu-item__degree">{degree}</h3>
+              {url
+                ? <a href={url} target="_blank" rel="noopener noreferrer" class="edu-item__institution">{institution}</a>
+                : <span class="edu-item__institution">{institution}</span>
+              }
+              <span class="edu-item__year">{year}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Certificates -->
+    {certificates.length > 0 && (
+      <section class="about-section" aria-labelledby="cert-heading">
+        <h2 id="cert-heading" class="about-section__heading">Certificates</h2>
+        <div class="cert-list">
+          {certificates.map(({ name, issuer, date, credentialUrls }) => (
+            <div class="cert-item">
+              <h3 class="cert-item__name">{name}</h3>
+              <p class="cert-item__issuer">{issuer}{date ? ` · ${date}` : ''}</p>
+              <div class="cert-item__links">
+                {credentialUrls.map((url, i) => (
+                  <a href={url} target="_blank" rel="noopener noreferrer" class="cert-link">
+                    Credential {credentialUrls.length > 1 ? i + 1 : ''}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Achievements -->
+    {achievements.length > 0 && (
+      <section class="about-section" aria-labelledby="achieve-heading">
+        <h2 id="achieve-heading" class="about-section__heading">Achievements</h2>
+        <ul class="achieve-list">
+          {achievements.map(({ title, description }) => (
+            <li class="achieve-item">
+              <strong>{title}</strong> — {description}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .about-page {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-20);
+    max-width: 860px;
+  }
+
+  /* Hero */
+  .about-hero {
+    margin-bottom: var(--space-12);
+    padding-bottom: var(--space-12);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .about-hero__content { display: flex; gap: var(--space-8); align-items: flex-start; flex-wrap: wrap; }
+  .about-hero__avatar {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--color-primary);
+    flex-shrink: 0;
+  }
+  .about-hero__info { flex: 1; min-width: 240px; }
+  .about-hero__name { font-size: var(--text-4xl); font-weight: var(--weight-bold); margin-bottom: var(--space-1); }
+  .about-hero__title { font-size: var(--text-xl); color: var(--color-primary); font-weight: var(--weight-medium); margin-bottom: var(--space-2); }
+  .about-hero__location { font-size: var(--text-sm); color: var(--color-text-secondary); margin-bottom: var(--space-4); }
+  .about-hero__bio { color: var(--color-text-secondary); line-height: var(--leading-relaxed); margin-bottom: var(--space-5); }
+  .about-hero__socials { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .about-social-btn { font-size: var(--text-sm); padding: 0.375rem var(--space-3); }
+
+  /* Sections */
+  .about-section { margin-bottom: var(--space-12); }
+  .about-section__heading {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-semibold);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-3);
+    border-bottom: 2px solid var(--color-primary);
+  }
+  .about-section__text { color: var(--color-text-secondary); line-height: var(--leading-relaxed); max-width: 660px; }
+
+  /* Timeline */
+  .timeline { display: flex; flex-direction: column; gap: var(--space-6); position: relative; padding-left: var(--space-8); }
+  .timeline::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 1px; background: var(--color-border); }
+  .timeline__item { display: flex; gap: var(--space-4); position: relative; }
+  .timeline__dot { width: 14px; height: 14px; border-radius: 50%; background: var(--color-primary); flex-shrink: 0; margin-top: 4px; position: absolute; left: calc(-1 * var(--space-8)); }
+  .timeline__role { font-size: var(--text-lg); font-weight: var(--weight-semibold); margin-bottom: var(--space-1); }
+  .timeline__company { font-size: var(--text-sm); color: var(--color-primary); margin-bottom: var(--space-2); }
+  .timeline__desc { color: var(--color-text-secondary); font-size: var(--text-sm); line-height: var(--leading-relaxed); }
+  .timeline__highlights { margin-top: var(--space-2); padding-left: var(--space-4); list-style: disc; display: flex; flex-direction: column; gap: var(--space-1); }
+  .timeline__highlights li { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+  /* Projects */
+  .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-4); }
+  .project-card { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+  .project-card__name { font-size: var(--text-base); font-weight: var(--weight-semibold); }
+  .project-card__desc { font-size: var(--text-sm); color: var(--color-text-secondary); flex: 1; }
+  .project-card__tech { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .project-card__links { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .project-card__links .btn { font-size: var(--text-xs); padding: 0.25rem var(--space-2); }
+
+  /* Skills */
+  .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-5); }
+  .skills-category__name { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-3); }
+  .skills-category__pills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+  /* Education */
+  .edu-list { display: flex; flex-direction: column; gap: var(--space-4); }
+  .edu-item { padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: var(--space-1); }
+  .edu-item__degree { font-size: var(--text-base); font-weight: var(--weight-semibold); }
+  .edu-item__institution { font-size: var(--text-sm); color: var(--color-primary); text-decoration: none; }
+  .edu-item__institution:hover { text-decoration: underline; }
+  .edu-item__year { font-size: var(--text-xs); color: var(--color-text-secondary); }
+
+  /* Certificates */
+  .cert-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-4); }
+  .cert-item { padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  .cert-item__name { font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: var(--space-1); }
+  .cert-item__issuer { font-size: var(--text-xs); color: var(--color-text-secondary); margin-bottom: var(--space-3); }
+  .cert-item__links { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .cert-link { font-size: var(--text-xs); color: var(--color-primary); text-decoration: underline; }
+
+  /* Achievements */
+  .achieve-list { display: flex; flex-direction: column; gap: var(--space-3); list-style: disc; padding-left: var(--space-5); }
+  .achieve-item { color: var(--color-text-secondary); font-size: var(--text-sm); line-height: var(--leading-relaxed); }
+  .achieve-item strong { color: var(--color-text-primary); }
+</style>

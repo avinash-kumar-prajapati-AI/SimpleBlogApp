@@ -1,0 +1,149 @@
+---
+/**
+ * categories.astro — all categories + all tags
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TagPill from '../components/TagPill.astro';
+import AdUnit from '../components/AdUnit.astro';
+import { fetchAllArticles, fetchVisibility, fetchDrafts } from '../lib/github';
+import { parseArticle } from '../lib/parseArticles';
+
+let categoryMap = new Map<string, number>();
+let tagMap = new Map<string, number>();
+
+try {
+  const [rawArticles, { visible }, drafts] = await Promise.all([
+    fetchAllArticles(),
+    fetchVisibility(),
+    fetchDrafts(),
+  ]);
+
+  const articles = rawArticles
+    .filter((r) => !drafts.has(r.slug))
+    .map((r) => parseArticle(r.raw, r.slug, r.category))
+    .filter((a) => !a.frontmatter.draft)
+    .filter((a) => visible.length === 0 || visible.includes(a.category));
+
+  articles.forEach((a) => {
+    categoryMap.set(a.category, (categoryMap.get(a.category) ?? 0) + 1);
+    a.frontmatter.tags.forEach((t) => tagMap.set(t, (tagMap.get(t) ?? 0) + 1));
+  });
+} catch (e) {
+  console.warn('categories.astro: could not fetch', e);
+}
+
+const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1] - a[1]);
+const sortedTags = [...tagMap.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout title="Categories & Tags" description="Browse all article categories and tags.">
+  <div class="container categories-page">
+    <h1 class="page-title">Categories & Tags</h1>
+
+    <AdUnit size="banner" id="categories-top-ad" />
+
+    <!-- Categories -->
+    <section aria-labelledby="cats-heading" class="categories-section">
+      <h2 class="section-heading" id="cats-heading">All Categories</h2>
+      {sortedCategories.length > 0 ? (
+        <div class="category-grid">
+          {sortedCategories.map(([name, count]) => (
+            <a
+              href={`/articles/${name}`}
+              class="category-tile card"
+              aria-label={`${name} — ${count} article${count !== 1 ? 's' : ''}`}
+            >
+              <span class="category-tile__name">{name}</span>
+              <span class="category-tile__count">{count}</span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="empty-text">No categories yet.</p>
+      )}
+    </section>
+
+    <!-- Tags -->
+    <section aria-labelledby="tags-heading" class="tags-section">
+      <h2 class="section-heading" id="tags-heading">All Tags</h2>
+      {sortedTags.length > 0 ? (
+        <div class="tags-cloud">
+          {sortedTags.map(([tag, count]) => (
+            <a
+              href={`/search?q=${encodeURIComponent(`@tag ${tag}`)}`}
+              class="tag-pill tag-pill--weighted"
+              style={`--tag-weight: ${Math.min(count / 5, 1)}`}
+              aria-label={`#${tag} — ${count} article${count !== 1 ? 's' : ''}`}
+            >
+              #{tag}
+              <span class="tag-count">({count})</span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="empty-text">No tags yet.</p>
+      )}
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .categories-page {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-16);
+  }
+  .page-title {
+    font-size: var(--text-4xl);
+    font-weight: var(--weight-bold);
+    margin-bottom: var(--space-8);
+  }
+  .section-heading {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-semibold);
+    margin-bottom: var(--space-6);
+  }
+  .categories-section { margin-bottom: var(--space-12); }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-4);
+  }
+  .category-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-5);
+    text-decoration: none;
+    color: inherit;
+    animation: card-enter 0.4s cubic-bezier(0.42,0,0.58,1) both;
+    transition: border-color var(--transition-normal), transform var(--transition-fast);
+  }
+  .category-tile:hover { transform: translateY(-2px); text-decoration: none; }
+  .category-tile__name {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--color-primary);
+  }
+  .category-tile__count {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+  }
+
+  .tags-section { margin-bottom: var(--space-8); }
+  .tags-cloud { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+  .tag-pill--weighted {
+    font-size: calc(var(--text-xs) + calc(var(--tag-weight, 0) * 4px));
+    opacity: calc(0.6 + calc(var(--tag-weight, 0) * 0.4));
+  }
+  .tag-count { font-size: 0.8em; opacity: 0.7; margin-left: 2px; }
+
+  .empty-text { color: var(--color-text-secondary); }
+
+  @keyframes card-enter {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>

@@ -1,0 +1,149 @@
+---
+/**
+ * search.astro — client-side search over build-time JSON index
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchBar from '../components/SearchBar.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import AdUnit from '../components/AdUnit.astro';
+
+const query = Astro.url.searchParams.get('q') ?? '';
+---
+
+<BaseLayout
+  title="Search Articles"
+  description="Search all articles by title, tag, or category."
+>
+  <div class="container search-page">
+    <header class="search-page__header">
+      <h1 class="search-page__title">Search</h1>
+      <p class="search-page__sub">Search by keyword, <code>@tag name</code>, or <code>@category name</code></p>
+    </header>
+
+    <SearchBar initialQuery={query} />
+
+    <!-- Top banner ad -->
+    <AdUnit size="banner" id="search-top-ad" />
+
+    <!-- Results will be injected by client JS -->
+    <div id="search-results" aria-live="polite" aria-label="Search results">
+      <div id="results-grid" class="article-grid"></div>
+      <p id="results-count" class="search-page__count"></p>
+      <p id="no-results" class="search-page__empty" hidden>
+        No articles found. Try a different search term.
+      </p>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .search-page {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-16);
+    max-width: 1000px;
+  }
+  .search-page__header { margin-bottom: var(--space-8); }
+  .search-page__title { font-size: var(--text-4xl); font-weight: var(--weight-bold); margin-bottom: var(--space-2); }
+  .search-page__sub { color: var(--color-text-secondary); font-size: var(--text-base); }
+  .search-page__count { font-size: var(--text-sm); color: var(--color-text-secondary); margin: var(--space-4) 0; }
+  .search-page__empty { color: var(--color-text-secondary); text-align: center; padding: var(--space-12) 0; }
+  #results-grid { margin-top: var(--space-6); }
+</style>
+
+<script>
+  import type { SearchEntry } from '../lib/searchIndex';
+
+  let index: SearchEntry[] = [];
+  let loaded = false;
+
+  const input = document.getElementById('search-input') as HTMLInputElement | null;
+  const grid = document.getElementById('results-grid');
+  const countEl = document.getElementById('results-count');
+  const noResults = document.getElementById('no-results');
+
+  async function loadIndex() {
+    if (loaded) return;
+    const res = await fetch('/search-index.json');
+    if (res.ok) index = await res.json();
+    loaded = true;
+  }
+
+  function filterIndex(q: string): SearchEntry[] {
+    const query = q.trim().toLowerCase();
+    if (!query) return index;
+    if (query.startsWith('@tag ')) {
+      const tag = query.slice(5).trim();
+      return index.filter((a) => a.tags.some((t) => t.toLowerCase().includes(tag)));
+    }
+    if (query.startsWith('@category ')) {
+      const cat = query.slice(10).trim();
+      return index.filter((a) => a.category.toLowerCase().includes(cat));
+    }
+    return index.filter(
+      (a) => a.title.toLowerCase().includes(query) || a.description.toLowerCase().includes(query)
+    );
+  }
+
+  function renderCard(entry: SearchEntry, i: number): string {
+    const href = `/articles/${entry.category}/${entry.slug}`;
+    const date = new Date(entry.modified_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const tags = entry.tags.slice(0, 4).map((t) =>
+      `<a href="/search?q=${encodeURIComponent(`@tag ${t}`)}" class="tag-pill">#${t}</a>`
+    ).join('');
+    return `
+      <article class="article-card card" style="--card-delay:${Math.min(i * 50, 400)}ms; animation: card-enter 0.4s cubic-bezier(0.42,0,0.58,1) var(--card-delay,0ms) both;">
+        <div class="article-card__body" style="padding: var(--space-5);">
+          <div class="article-card__meta">
+            <a href="/articles/${entry.category}" class="tag-pill tag-pill--category">${entry.category}</a>
+            <span class="article-card__date">${date}</span>
+            <span class="article-card__reading">· ${entry.readingTime} min read</span>
+          </div>
+          <h2 class="article-card__title" style="font-size: var(--text-lg);">
+            <a href="${href}" class="article-card__title-link">${entry.title}</a>
+          </h2>
+          <p class="article-card__desc">${entry.description}</p>
+          <div class="article-card__tags">${tags}</div>
+        </div>
+      </article>
+    `;
+  }
+
+  async function runSearch(q: string) {
+    await loadIndex();
+    const results = filterIndex(q);
+    if (!grid || !countEl || !noResults) return;
+
+    if (results.length === 0) {
+      grid.innerHTML = '';
+      countEl.textContent = '';
+      noResults.hidden = false;
+    } else {
+      grid.innerHTML = results.map((e, i) => renderCard(e, i)).join('');
+      countEl.textContent = `${results.length} article${results.length !== 1 ? 's' : ''} found`;
+      noResults.hidden = true;
+    }
+  }
+
+  // Initial search from URL
+  const initialQ = new URLSearchParams(window.location.search).get('q') ?? '';
+  if (initialQ) runSearch(initialQ);
+
+  // Live search on input (debounced 300ms)
+  let debounce: ReturnType<typeof setTimeout>;
+  input?.addEventListener('input', (e) => {
+    clearTimeout(debounce);
+    const val = (e.target as HTMLInputElement).value;
+    debounce = setTimeout(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('q', val);
+      window.history.replaceState({}, '', url.toString());
+      runSearch(val);
+    }, 300);
+  });
+
+  // Form submit → prevent page reload, use client-side
+  document.getElementById('search-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runSearch(input?.value ?? '');
+  });
+</script>

@@ -1,0 +1,118 @@
+---
+/**
+ * SearchBar.astro — client-side search with @tag/@category prefix syntax
+ */
+interface Props {
+  initialQuery?: string;
+  placeholder?: string;
+}
+const { initialQuery = '', placeholder = 'Search articles, @tag javascript, @category engineering...' } = Astro.props;
+---
+
+<form class="search-bar" role="search" id="search-form" action="/search" method="get">
+  <label for="search-input" class="search-bar__label">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <circle cx="11" cy="11" r="8"/>
+      <path d="m21 21-4.35-4.35"/>
+    </svg>
+    <span class="sr-only">Search</span>
+  </label>
+  <input
+    type="search"
+    id="search-input"
+    name="q"
+    class="search-bar__input"
+    placeholder={placeholder}
+    value={initialQuery}
+    autocomplete="off"
+    spellcheck="false"
+    aria-label="Search articles by title, tag or category"
+  />
+  {initialQuery && (
+    <button type="button" class="search-bar__clear" id="search-clear" aria-label="Clear search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  )}
+  <button type="submit" class="btn btn-primary search-bar__submit" aria-label="Submit search">
+    Search
+  </button>
+</form>
+
+<!-- Syntax hint pills -->
+<div class="search-hints" aria-label="Search syntax examples">
+  <span class="search-hints__label">Try:</span>
+  <a href="/search?q=%40tag+javascript" class="tag-pill">@tag javascript</a>
+  <a href="/search?q=%40category+engineering" class="tag-pill tag-pill--category">@category engineering</a>
+</div>
+
+<style>
+  .search-bar {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    overflow: hidden;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+  .search-bar:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-muted);
+  }
+
+  .search-bar__label {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-3);
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+
+  .search-bar__input {
+    flex: 1;
+    padding: 0.75rem 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    color: var(--color-text-primary);
+    background: transparent;
+    border: none;
+    outline: none;
+    min-width: 0;
+  }
+  .search-bar__input::placeholder { color: var(--color-text-disabled); }
+
+  .search-bar__clear {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-2);
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+  }
+  .search-bar__clear:hover { color: var(--color-error); }
+
+  .search-bar__submit {
+    border-radius: 0;
+    border-left: 1px solid var(--color-border);
+    height: 100%;
+    white-space: nowrap;
+  }
+
+  .search-hints {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+  .search-hints__label {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    font-weight: var(--weight-medium);
+  }
+</style>

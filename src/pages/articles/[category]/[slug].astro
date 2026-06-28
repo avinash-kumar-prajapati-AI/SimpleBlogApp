@@ -1,0 +1,293 @@
+---
+/**
+ * articles/[category]/[slug].astro — Article detail page
+ * Max revenue page: ad slots before/mid/after content + sidebar sticky
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ShareBar from '../../../components/ShareBar.astro';
+import TagPill from '../../../components/TagPill.astro';
+import AdUnit from '../../../components/AdUnit.astro';
+import Sidebar from '../../../components/Sidebar.astro';
+import { fetchAllArticles, fetchVisibility, fetchDrafts } from '../../../lib/github';
+import { parseArticle } from '../../../lib/parseArticles';
+import type { Article } from '../../../lib/parseArticles';
+
+export async function getStaticPaths() {
+  try {
+    const [rawArticles, { visible }, drafts] = await Promise.all([
+      fetchAllArticles(),
+      fetchVisibility(),
+      fetchDrafts(),
+    ]);
+
+    const articles: Article[] = rawArticles
+      .filter((r) => !drafts.has(r.slug))
+      .map((r) => parseArticle(r.raw, r.slug, r.category))
+      .filter((a) => !a.frontmatter.draft)
+      .filter((a) => visible.length === 0 || visible.includes(a.category));
+
+    const allTags = [...new Set(articles.flatMap((a) => a.frontmatter.tags))];
+    const allCategories = [...new Set(articles.map((a) => a.category))].map((c) => ({
+      name: c,
+      count: articles.filter((a) => a.category === c).length,
+    }));
+    const recentArticles = articles
+      .sort((a, b) => new Date(b.frontmatter.modified_date).getTime() - new Date(a.frontmatter.modified_date).getTime())
+      .slice(0, 5)
+      .map((a) => ({ slug: a.slug, category: a.category, title: a.frontmatter.title, modified_date: a.frontmatter.modified_date }));
+
+    return articles.map((article) => {
+      const idx = articles.findIndex((a) => a.slug === article.slug && a.category === article.category);
+      const prev = articles[idx + 1] ?? null;
+      const next = articles[idx - 1] ?? null;
+
+      return {
+        params: { category: article.category, slug: article.slug },
+        props: { article, allCategories, recentArticles, allTags, prev, next },
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+const { article, allCategories, recentArticles, allTags, prev, next } = Astro.props;
+const { frontmatter, html, readingTime, slug, category } = article;
+
+const canonicalUrl = new URL(`/articles/${category}/${slug}`, Astro.site).href;
+const ogImage = frontmatter.thumbnail
+  ? new URL(frontmatter.thumbnail, Astro.site).href
+  : new URL('/og-default.png', Astro.site).href;
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: frontmatter.title,
+  description: frontmatter.description,
+  dateModified: frontmatter.modified_date,
+  image: ogImage,
+  url: canonicalUrl,
+  author: { '@type': 'Person', name: 'Avinash' },
+  publisher: { '@type': 'Organization', name: 'AvinashBlog' },
+};
+---
+
+<BaseLayout
+  title={frontmatter.title}
+  description={frontmatter.description}
+  ogImage={frontmatter.thumbnail}
+  ogType="article"
+  canonicalUrl={canonicalUrl}
+  articleSchema={articleSchema}
+>
+  <div class="container" style="padding-top: var(--space-10); padding-bottom: var(--space-16);">
+    <div class="page-layout with-sidebar">
+      <!-- Main content -->
+      <div class="article-main">
+        <!-- After intro ad -->
+        <header class="article-header">
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Home</a>
+            <span aria-hidden="true"> / </span>
+            <a href={`/articles/${category}`} class="breadcrumb__link">{category}</a>
+            <span aria-hidden="true"> / </span>
+            <span aria-current="page">{frontmatter.title}</span>
+          </nav>
+
+          <div class="article-header__meta">
+            <TagPill label={category} type="category" />
+            <time class="article-meta__date" datetime={frontmatter.modified_date}>
+              {new Date(frontmatter.modified_date).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric',
+              })}
+            </time>
+            <span class="article-meta__reading">{readingTime} min read</span>
+          </div>
+
+          <h1 class="article-title">{frontmatter.title}</h1>
+          <p class="article-description">{frontmatter.description}</p>
+        </header>
+
+        <!-- After intro ad slot -->
+        <AdUnit size="banner" id="article-intro-ad" />
+
+        <!-- Thumbnail -->
+        {frontmatter.thumbnail && (
+          <div class="article-thumb">
+            <img
+              src={frontmatter.thumbnail}
+              alt={frontmatter.title}
+              width="720" height="405"
+              loading="eager"
+            />
+          </div>
+        )}
+
+        <!-- Article body -->
+        <div class="article-content" set:html={html} />
+
+        <!-- Mid-content ad -->
+        <AdUnit size="banner" id="article-mid-ad" />
+
+        <!-- External links -->
+        {frontmatter.external_links && frontmatter.external_links.length > 0 && (
+          <div class="external-links" aria-label="Related links">
+            <h3 class="external-links__heading">Related Links</h3>
+            <ul class="external-links__list">
+              {frontmatter.external_links.map(({ label, url }) => (
+                <li>
+                  <a href={url} target="_blank" rel="noopener noreferrer" class="external-link">
+                    {label}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15 3 21 3 21 9"/>
+                      <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <!-- Tags -->
+        {frontmatter.tags.length > 0 && (
+          <div class="article-tags" aria-label="Article tags">
+            {frontmatter.tags.map((tag) => <TagPill label={tag} type="tag" />)}
+          </div>
+        )}
+
+        <!-- Share bar -->
+        <ShareBar title={frontmatter.title} url={canonicalUrl} />
+
+        <!-- End of article ad -->
+        <AdUnit size="banner" id="article-end-ad" />
+
+        <!-- Prev/Next navigation -->
+        <nav class="article-nav" aria-label="Article navigation">
+          {prev && (
+            <a href={`/articles/${prev.category}/${prev.slug}`} class="article-nav__link article-nav__link--prev">
+              <span class="article-nav__dir">← Previous</span>
+              <span class="article-nav__title">{prev.frontmatter.title}</span>
+            </a>
+          )}
+          {next && (
+            <a href={`/articles/${next.category}/${next.slug}`} class="article-nav__link article-nav__link--next">
+              <span class="article-nav__dir">Next →</span>
+              <span class="article-nav__title">{next.frontmatter.title}</span>
+            </a>
+          )}
+        </nav>
+      </div>
+
+      <!-- Sidebar -->
+      <Sidebar
+        categories={allCategories}
+        recentArticles={recentArticles}
+        tags={allTags}
+      />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .article-main { min-width: 0; }
+
+  .breadcrumb {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-6);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  .breadcrumb a { color: var(--color-text-secondary); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--color-primary); }
+  .breadcrumb__link { text-transform: capitalize; }
+
+  .article-header { margin-bottom: var(--space-6); }
+  .article-header__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .article-meta__date, .article-meta__reading {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .article-title {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-tight);
+    margin-bottom: var(--space-4);
+    /* Staging principle: hero element stands out */
+    animation: hero-reveal 0.5s cubic-bezier(0.42,0,0.58,1) both;
+  }
+  @keyframes hero-reveal {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .article-description {
+    font-size: var(--text-lg);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    border-left: 3px solid var(--color-primary);
+    padding-left: var(--space-4);
+    margin-bottom: 0;
+  }
+
+  .article-thumb {
+    margin: var(--space-6) 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .article-thumb img { width: 100%; height: auto; }
+
+  /* Ad spacing */
+  .ad-unit { margin: var(--space-8) 0; }
+
+  /* External links */
+  .external-links { margin: var(--space-8) 0; padding: var(--space-5); background: var(--ibm-gray-10); border-radius: var(--radius-md); }
+  .external-links__heading { font-size: var(--text-sm); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); margin-bottom: var(--space-3); }
+  .external-links__list { display: flex; flex-direction: column; gap: var(--space-2); list-style: none; }
+  .external-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-primary);
+    font-size: var(--text-sm);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+  .external-link:hover { color: var(--color-primary-hover); text-decoration: underline; }
+
+  /* Tags */
+  .article-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-8) 0 0; }
+
+  /* Prev/Next */
+  .article-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+  }
+  .article-nav__link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+  }
+  .article-nav__link:hover { border-color: var(--color-primary); background: var(--color-primary-light); text-decoration: none; }
+  .article-nav__link--next { text-align: right; }
+  .article-nav__dir { font-size: var(--text-xs); color: var(--color-text-secondary); font-weight: var(--weight-medium); }
+  .article-nav__title { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-primary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>

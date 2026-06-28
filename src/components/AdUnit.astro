@@ -1,0 +1,22 @@
+---
+/**
+ * AdUnit.astro — CLS-safe ad placeholder
+ * Hardcoded min-height prevents layout shift when real ads load
+ */
+type AdSize = 'banner' | 'square' | 'sidebar';
+interface Props { size?: AdSize; id: string; label?: string; }
+const { size = 'banner', id, label = 'Advertisement' } = Astro.props;
+---
+
+<div
+  class={`ad-unit ad-unit--${size}`}
+  id={id}
+  role="complementary"
+  aria-label={label}
+  data-ad-slot={id}
+>
+  <span>Ad</span>
+</div>
+
+<!-- Real AdSense unit will replace this div after approval.
+     Keep the min-height wrapper even after replacing inner content. -->

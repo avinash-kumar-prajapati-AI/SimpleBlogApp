@@ -1,0 +1,182 @@
+---
+/**
+ * ArticleCard.astro — article card with thumbnail, meta, tags
+ * Framer-motion-style entrance via CSS animation (pure Astro = no JS runtime)
+ */
+interface Props {
+  slug: string;
+  category: string;
+  title: string;
+  description: string;
+  tags: string[];
+  modified_date: string;
+  thumbnail?: string;
+  readingTime?: number;
+  index?: number; // for stagger delay
+}
+
+const {
+  slug, category, title, description, tags,
+  modified_date, thumbnail, readingTime = 1, index = 0,
+} = Astro.props;
+
+const href = `/articles/${category}/${slug}`;
+const categoryHref = `/articles/${category}`;
+const formattedDate = new Date(modified_date).toLocaleDateString('en-US', {
+  year: 'numeric', month: 'short', day: 'numeric',
+});
+
+// Stagger delay: 50ms per card (max 400ms) — Disney overlap action
+const delay = Math.min(index * 50, 400);
+---
+
+<article
+  class="article-card card"
+  style={`--card-delay: ${delay}ms`}
+  aria-label={title}
+>
+  <a href={href} class="article-card__link" tabindex="-1" aria-hidden="true">
+    <div class="article-card__thumb">
+      {thumbnail ? (
+        <img
+          src={thumbnail}
+          alt={`Thumbnail for ${title}`}
+          width="640"
+          height="360"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div class="article-card__thumb-placeholder" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/>
+            <polyline points="8.5 10.5 12 7 15.5 10.5"/>
+            <line x1="12" y1="7" x2="12" y2="17"/>
+          </svg>
+        </div>
+      )}
+    </div>
+  </a>
+
+  <div class="article-card__body">
+    <div class="article-card__meta">
+      <a href={categoryHref} class="tag-pill tag-pill--category">{category}</a>
+      <span class="article-card__date">{formattedDate}</span>
+      <span class="article-card__reading">{readingTime} min read</span>
+    </div>
+
+    <h2 class="article-card__title">
+      <a href={href} class="article-card__title-link">{title}</a>
+    </h2>
+
+    <p class="article-card__desc">{description}</p>
+
+    {tags.length > 0 && (
+      <div class="article-card__tags" role="list" aria-label="Tags">
+        {tags.slice(0, 4).map((tag) => (
+          <a
+            href={`/search?q=%40tag+${encodeURIComponent(tag)}`}
+            class="tag-pill"
+            role="listitem"
+          >
+            {tag}
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</article>
+
+<style>
+  .article-card {
+    display: flex;
+    flex-direction: column;
+    /* Framer-motion-style: slow in + slow out entrance */
+    animation: card-enter 0.4s cubic-bezier(0.42, 0, 0.58, 1) var(--card-delay, 0ms) both;
+  }
+
+  @keyframes card-enter {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .article-card__link { display: block; text-decoration: none; }
+
+  .article-card__thumb {
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    background: var(--ibm-gray-10);
+  }
+  .article-card__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s cubic-bezier(0.42, 0, 0.58, 1);
+  }
+  .article-card:hover .article-card__thumb img {
+    /* Appeal principle: subtle scale */
+    transform: scale(1.03);
+  }
+  .article-card__thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ibm-gray-30);
+    background: var(--ibm-gray-10);
+  }
+
+  .article-card__body {
+    padding: var(--space-4) var(--space-5) var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    flex: 1;
+  }
+
+  .article-card__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .article-card__date,
+  .article-card__reading {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+  }
+  .article-card__reading::before { content: '·'; margin-right: var(--space-2); }
+
+  .article-card__title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-snug);
+    margin: 0;
+  }
+  .article-card__title-link {
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+  .article-card__title-link:hover { color: var(--color-primary); text-decoration: none; }
+
+  .article-card__desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+    /* Limit to 3 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+  }
+
+  .article-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: auto;
+  }
+</style>

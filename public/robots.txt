@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://avinashblog.pages.dev/sitemap-index.xml

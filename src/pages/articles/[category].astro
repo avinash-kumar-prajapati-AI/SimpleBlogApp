@@ -1,0 +1,151 @@
+---
+/**
+ * articles/[category].astro — category listing page
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import AdUnit from '../../components/AdUnit.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import { fetchAllArticles, fetchVisibility, fetchDrafts, fetchFileContent } from '../../lib/github';
+import { parseArticle } from '../../lib/parseArticles';
+
+export async function getStaticPaths() {
+  try {
+    const [rawArticles, { visible }, drafts] = await Promise.all([
+      fetchAllArticles(),
+      fetchVisibility(),
+      fetchDrafts(),
+    ]);
+
+    const articles = rawArticles
+      .filter((r) => !drafts.has(r.slug))
+      .map((r) => parseArticle(r.raw, r.slug, r.category))
+      .filter((a) => !a.frontmatter.draft)
+      .filter((a) => visible.length === 0 || visible.includes(a.category));
+
+    const categories = [...new Set(articles.map((a) => a.category))];
+
+    return categories.map((category) => {
+      const catArticles = articles
+        .filter((a) => a.category === category)
+        .sort((a, b) => new Date(b.frontmatter.modified_date).getTime() - new Date(a.frontmatter.modified_date).getTime());
+
+      const allTags = [...new Set(articles.flatMap((a) => a.frontmatter.tags))];
+
+      return {
+        params: { category },
+        props: {
+          articles: catArticles,
+          allCategories: categories.map((c) => ({
+            name: c,
+            count: articles.filter((a) => a.category === c).length,
+          })),
+          recentArticles: articles.slice(0, 5).map((a) => ({
+            slug: a.slug,
+            category: a.category,
+            title: a.frontmatter.title,
+            modified_date: a.frontmatter.modified_date,
+          })),
+          allTags,
+        },
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+const { category } = Astro.params;
+const { articles, allCategories, recentArticles, allTags } = Astro.props;
+
+// Try to get aboutcategory.txt
+let aboutCategory = '';
+try {
+  aboutCategory = await fetchFileContent(`articles/${category}/aboutcategory.txt`);
+} catch { /* optional file */ }
+---
+
+<BaseLayout
+  title={`${category} — Articles`}
+  description={aboutCategory || `All articles in the ${category} category.`}
+>
+  <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-16);">
+    <div class="page-layout with-sidebar">
+      <div class="category-main">
+        <header class="category-header">
+          <h1 class="category-title">{category}</h1>
+          {aboutCategory && <p class="category-about">{aboutCategory}</p>}
+          <p class="category-count">{articles.length} article{articles.length !== 1 ? 's' : ''}</p>
+        </header>
+
+        <AdUnit size="banner" id="category-top-ad" />
+
+        {articles.length > 0 ? (
+          <>
+            <div class="article-grid" style="margin-top: var(--space-6);">
+              {articles.slice(0, 6).map((article, i) => (
+                <ArticleCard
+                  slug={article.slug}
+                  category={article.category}
+                  title={article.frontmatter.title}
+                  description={article.frontmatter.description}
+                  tags={article.frontmatter.tags}
+                  modified_date={article.frontmatter.modified_date}
+                  thumbnail={article.frontmatter.thumbnail}
+                  readingTime={article.readingTime}
+                  index={i}
+                />
+              ))}
+            </div>
+
+            {articles.length > 6 && (
+              <>
+                <AdUnit size="banner" id="category-mid-ad" />
+                <div class="article-grid">
+                  {articles.slice(6).map((article, i) => (
+                    <ArticleCard
+                      slug={article.slug}
+                      category={article.category}
+                      title={article.frontmatter.title}
+                      description={article.frontmatter.description}
+                      tags={article.frontmatter.tags}
+                      modified_date={article.frontmatter.modified_date}
+                      thumbnail={article.frontmatter.thumbnail}
+                      readingTime={article.readingTime}
+                      index={i}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <p style="color: var(--color-text-secondary); padding: var(--space-8) 0;">No articles in this category yet.</p>
+        )}
+      </div>
+
+      <Sidebar
+        categories={allCategories}
+        recentArticles={recentArticles}
+        tags={allTags}
+      />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .category-header { margin-bottom: var(--space-6); }
+  .category-title {
+    font-size: var(--text-4xl);
+    font-weight: var(--weight-bold);
+    margin-bottom: var(--space-3);
+    text-transform: capitalize;
+  }
+  .category-about {
+    color: var(--color-text-secondary);
+    max-width: 640px;
+    line-height: var(--leading-relaxed);
+    margin-bottom: var(--space-3);
+  }
+  .category-count { font-size: var(--text-sm); color: var(--color-text-secondary); }
+</style>

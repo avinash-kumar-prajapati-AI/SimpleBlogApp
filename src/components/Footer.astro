@@ -1,0 +1,102 @@
+---
+/**
+ * Footer.astro — single-strip footer with social links
+ * Social links come from profile.json via props (passed from pages)
+ */
+interface SocialLink { platform: string; url: string; }
+interface Props { socials?: SocialLink[]; }
+const { socials = [] } = Astro.props;
+const year = new Date().getFullYear();
+
+const iconMap: Record<string, string> = {
+  github:   'M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z',
+  twitter:  'M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.52 8.52 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z',
+  linkedin: 'M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z',
+  email:    'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z',
+};
+
+function getIcon(platform: string): string {
+  return iconMap[platform.toLowerCase()] ?? iconMap.email;
+}
+---
+
+<footer class="footer" role="contentinfo">
+  <div class="container footer__inner">
+    <p class="footer__copy">&copy; {year} AvinashBlog. All rights reserved.</p>
+
+    <nav aria-label="Footer navigation" class="footer__nav">
+      <a href="/categories" class="footer__nav-link">Categories</a>
+      <a href="/privacy" class="footer__nav-link">Privacy</a>
+      <a href="/contact" class="footer__nav-link">Contact</a>
+    </nav>
+
+    {socials.length > 0 && (
+      <ul class="footer__socials" role="list" aria-label="Social media links">
+        {socials.map(({ platform, url }) => (
+          <li>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${platform} profile`}
+              class="footer__social-link"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d={getIcon(platform)} />
+              </svg>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</footer>
+
+<style>
+  .footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .footer__copy {
+    font-size: var(--text-sm);
+    color: var(--ibm-gray-60);
+    margin: 0;
+  }
+
+  .footer__nav {
+    display: flex;
+    gap: var(--space-4);
+  }
+  .footer__nav-link {
+    font-size: var(--text-sm);
+    color: var(--ibm-gray-30);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+  .footer__nav-link:hover { color: var(--ibm-white); text-decoration: none; }
+
+  .footer__socials {
+    display: flex;
+    gap: var(--space-3);
+    list-style: none;
+  }
+  .footer__social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    color: var(--ibm-gray-60);
+    border-radius: var(--radius-sm);
+    transition: color var(--transition-fast), background var(--transition-fast);
+    text-decoration: none;
+  }
+  .footer__social-link:hover { color: var(--ibm-white); background: var(--ibm-gray-80); }
+
+  @media (max-width: 640px) {
+    .footer__inner { flex-direction: column; align-items: flex-start; }
+  }
+</style>

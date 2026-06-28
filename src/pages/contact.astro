@@ -113,7 +113,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </div>
         <p class="contact-response-time">
-          I typically respond within 2–3 business days.
+          I typically respond within 2-3 business days.
         </p>
       </section>
     </div>
@@ -195,9 +195,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const feedback = document.getElementById('form-feedback');
 
   form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
     if (!submitBtn || !feedback) return;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending…';
+    submitBtn.textContent = 'Sending...';
 
     try {
       const res = await fetch(form.action, {
@@ -206,7 +207,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         headers: { Accept: 'application/json' },
       });
       if (res.ok) {
-        feedback.textContent = 'Message sent! I'll get back to you soon.';
+        feedback.textContent = "Message sent! I'll get back to you soon.";
         feedback.hidden = false;
         form.reset();
       } else {

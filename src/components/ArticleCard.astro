@@ -39,7 +39,7 @@ const delay = Math.min(index * 50, 400);
     <div class="article-card__thumb">
       {thumbnail ? (
         <img
-          src={thumbnail}
+          src={thumbnail.startsWith('/') ? thumbnail : '/' + thumbnail}
           alt={`Thumbnail for ${title}`}
           width="640"
           height="360"

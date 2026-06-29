@@ -50,8 +50,17 @@ try {
   console.warn('index.astro: could not fetch articles:', e);
 }
 
-const recentArticles = articles.slice(0, 9);
-const featuredArticle = articles[0];
+const featuredArticle = articles.find(
+  (a) =>
+    a.frontmatter.featured === true ||
+    a.frontmatter.features === true ||
+    a.frontmatter.featured === "true" ||
+    a.frontmatter.features === "true"
+) || articles[0];
+
+const recentArticles = articles
+  .filter((a) => !featuredArticle || a.slug !== featuredArticle.slug || a.category !== featuredArticle.category)
+  .slice(0, 9);
 ---
 
 <BaseLayout title="AvinashBlog" description="Personal blog on software engineering, AI, cloud, and developer tooling.">
@@ -101,7 +110,7 @@ const featuredArticle = articles[0];
         {featuredArticle.frontmatter.thumbnail && (
           <div class="featured-card__thumb">
             <img
-              src={featuredArticle.frontmatter.thumbnail}
+              src={featuredArticle.frontmatter.thumbnail.startsWith('/') ? featuredArticle.frontmatter.thumbnail : '/' + featuredArticle.frontmatter.thumbnail}
               alt={featuredArticle.frontmatter.title}
               width="800" height="450"
               loading="eager"
@@ -113,58 +122,59 @@ const featuredArticle = articles[0];
   )}
 
   <!-- ── Recent Articles ───────────────────────────── -->
-  <section class="container articles-section" aria-label="Recent articles">
-    <div class="section-header">
-      <h2 class="section-heading">Recent Articles</h2>
-      <a href="/search" class="btn btn-ghost">View all →</a>
-    </div>
-
-    {recentArticles.length > 0 ? (
-      <>
-        <div class="article-grid">
-          {recentArticles.slice(0, 3).map((a, i) => (
-            <ArticleCard
-              slug={a.slug} category={a.category}
-              title={a.frontmatter.title} description={a.frontmatter.description}
-              tags={a.frontmatter.tags} modified_date={a.frontmatter.modified_date}
-              thumbnail={a.frontmatter.thumbnail} readingTime={a.readingTime} index={i}
-            />
-          ))}
-        </div>
-
-        <div class="ad-wrap"><AdUnit size="banner" id="mid-feed-ad-1" /></div>
-
-        <div class="article-grid">
-          {recentArticles.slice(3, 6).map((a, i) => (
-            <ArticleCard
-              slug={a.slug} category={a.category}
-              title={a.frontmatter.title} description={a.frontmatter.description}
-              tags={a.frontmatter.tags} modified_date={a.frontmatter.modified_date}
-              thumbnail={a.frontmatter.thumbnail} readingTime={a.readingTime} index={i}
-            />
-          ))}
-        </div>
-
-        <div class="ad-wrap"><AdUnit size="banner" id="mid-feed-ad-2" /></div>
-
-        <div class="article-grid">
-          {recentArticles.slice(6).map((a, i) => (
-            <ArticleCard
-              slug={a.slug} category={a.category}
-              title={a.frontmatter.title} description={a.frontmatter.description}
-              tags={a.frontmatter.tags} modified_date={a.frontmatter.modified_date}
-              thumbnail={a.frontmatter.thumbnail} readingTime={a.readingTime} index={i}
-            />
-          ))}
-        </div>
-      </>
-    ) : (
-      <div class="empty-state">
-        <p>No articles yet. Check back soon!</p>
-        <a href="/about" class="btn btn-ghost">About this blog →</a>
+  {recentArticles.length > 0 && (
+    <section class="container articles-section" aria-label="Recent articles">
+      <div class="section-header">
+        <h2 class="section-heading">Recent Articles</h2>
+        <a href="/search" class="btn btn-ghost">View all →</a>
       </div>
-    )}
-  </section>
+
+      <div class="article-grid">
+        {recentArticles.slice(0, 3).map((a, i) => (
+          <ArticleCard
+            slug={a.slug} category={a.category}
+            title={a.frontmatter.title} description={a.frontmatter.description}
+            tags={a.frontmatter.tags} modified_date={a.frontmatter.modified_date}
+            thumbnail={a.frontmatter.thumbnail} readingTime={a.readingTime} index={i}
+          />
+        ))}
+      </div>
+
+      {recentArticles.length > 3 && (
+        <>
+          <div class="ad-wrap"><AdUnit size="banner" id="mid-feed-ad-1" /></div>
+
+          <div class="article-grid">
+            {recentArticles.slice(3, 6).map((a, i) => (
+              <ArticleCard
+                slug={a.slug} category={a.category}
+                title={a.frontmatter.title} description={a.frontmatter.description}
+                tags={a.frontmatter.tags} modified_date={a.frontmatter.modified_date}
+                thumbnail={a.frontmatter.thumbnail} readingTime={a.readingTime} index={i}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {recentArticles.length > 6 && (
+        <>
+          <div class="ad-wrap"><AdUnit size="banner" id="mid-feed-ad-2" /></div>
+
+          <div class="article-grid">
+            {recentArticles.slice(6).map((a, i) => (
+              <ArticleCard
+                slug={a.slug} category={a.category}
+                title={a.frontmatter.title} description={a.frontmatter.description}
+                tags={a.frontmatter.tags} modified_date={a.frontmatter.modified_date}
+                thumbnail={a.frontmatter.thumbnail} readingTime={a.readingTime} index={i}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  )}
 
   <!-- ── Popular Tags ──────────────────────────────── -->
   {popularTags.length > 0 && (

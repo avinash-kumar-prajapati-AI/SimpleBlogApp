@@ -32,6 +32,10 @@ const finalPathExists = existsSync(devVarsPath) || existsSync(envPath);
 console.log(`[Config] Env loaded, target file exists: ${finalPathExists}`);
 console.log(`[Config] Loaded process.env.GITHUB_TOKEN length: ${process.env.GITHUB_TOKEN ? process.env.GITHUB_TOKEN.length : 0}`);
 
+// Download remote media assets (images, PDF) to the local public/ directory before the build pipeline runs
+import { downloadMedia } from './src/lib/github.ts';
+await downloadMedia().catch((e) => console.error('[Config] Failed to pre-download media:', e));
+
 export default defineConfig({
   site: 'https://simpleblogapp.pages.dev',
   output: 'static',

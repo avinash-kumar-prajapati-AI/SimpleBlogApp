@@ -33,7 +33,7 @@ const { personal, social, experience, projects, education, skills, certificates,
       <div class="about-hero__content">
         {personal.avatar && (
           <img
-            src={personal.avatar}
+            src={personal.avatar.startsWith('/') ? personal.avatar : '/' + personal.avatar}
             alt={`Photo of ${personal.name}`}
             width="120" height="120"
             class="about-hero__avatar"

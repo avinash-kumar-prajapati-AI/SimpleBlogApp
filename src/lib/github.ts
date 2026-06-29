@@ -49,29 +49,30 @@ async function getConfig(): Promise<GithubConfig> {
   if (cachedConfig) return cachedConfig;
 
   const localEnv = await getLocalEnv();
+  const metaEnv = typeof import.meta.env !== "undefined" ? import.meta.env : {};
   
   const token = (
-    import.meta.env.GITHUB_TOKEN ||
+    metaEnv.GITHUB_TOKEN ||
     process.env.GITHUB_TOKEN ||
     localEnv.GITHUB_TOKEN
   ) as string | undefined;
 
   const owner = (
-    import.meta.env.GITHUB_REPO_OWNER ||
+    metaEnv.GITHUB_REPO_OWNER ||
     process.env.GITHUB_REPO_OWNER ||
     localEnv.GITHUB_REPO_OWNER ||
     "avinash-kumar-prajapati-AI"
   ) as string;
 
   const repo = (
-    import.meta.env.GITHUB_REPO_NAME ||
+    metaEnv.GITHUB_REPO_NAME ||
     process.env.GITHUB_REPO_NAME ||
     localEnv.GITHUB_REPO_NAME ||
     "Blog-space"
   ) as string;
 
   const branch = (
-    import.meta.env.GITHUB_BRANCH ||
+    metaEnv.GITHUB_BRANCH ||
     process.env.GITHUB_BRANCH ||
     localEnv.GITHUB_BRANCH ||
     "main"
@@ -227,5 +228,48 @@ export async function fetchDrafts(): Promise<Set<string>> {
     return new Set(raw.split("\n").map((l) => l.trim()).filter(Boolean));
   } catch {
     return new Set<string>();
+  }
+}
+
+/** Recursively download media files from the GitHub repository to the local public/media directory */
+export async function downloadMedia(): Promise<void> {
+  const config = await getConfig();
+  if (!config.token) {
+    console.warn("[GitHub API] No GITHUB_TOKEN set. Skipping media assets download.");
+    return;
+  }
+  const { join } = await import("node:path");
+  const localMediaDir = join(process.cwd(), "public", "media");
+  console.log(`[GitHub API] Downloading media folder to local ${localMediaDir}...`);
+  try {
+    await downloadDir("media", localMediaDir);
+    console.log("[GitHub API] Media assets downloaded successfully!");
+  } catch (err) {
+    console.error("[GitHub API] Failed to download media assets:", err);
+  }
+}
+
+async function downloadDir(repoPath: string, localDestDir: string): Promise<void> {
+  const { writeFileSync, mkdirSync } = await import("node:fs");
+  const { dirname, join } = await import("node:path");
+  
+  const items = await listDir(repoPath);
+  const headers = await getHeaders();
+  
+  for (const item of items) {
+    const localPath = join(localDestDir, item.name);
+    if (item.type === "dir") {
+      await downloadDir(item.path, localPath);
+    } else {
+      const url = await rawUrl(item.path);
+      const res = await fetch(url, { headers });
+      if (res.ok) {
+        const buffer = Buffer.from(await res.arrayBuffer());
+        mkdirSync(dirname(localPath), { recursive: true });
+        writeFileSync(localPath, buffer);
+      } else {
+        console.warn(`[GitHub API] Failed to download file: ${item.path} (${res.status})`);
+      }
+    }
   }
 }

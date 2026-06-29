@@ -116,7 +116,7 @@ const articleSchema = {
         {frontmatter.thumbnail && (
           <div class="article-thumb">
             <img
-              src={frontmatter.thumbnail}
+              src={frontmatter.thumbnail.startsWith('/') ? frontmatter.thumbnail : '/' + frontmatter.thumbnail}
               alt={frontmatter.title}
               width="720" height="405"
               loading="eager"

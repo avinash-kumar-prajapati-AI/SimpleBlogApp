@@ -1,5 +1,0 @@
-# Active Resume / About Page Role
-# Only one role can be active at a time
-# This slug must match a folder name inside media/docs/
-
-active: software-engineer

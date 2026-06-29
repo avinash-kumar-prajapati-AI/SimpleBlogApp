@@ -1,6 +1,6 @@
 ---
 /**
- * Navbar.astro — sticky IBM-styled navigation bar
+ * Navbar.astro — sticky IBM-styled navigation bar with polished mobile drawer
  */
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -14,8 +14,9 @@ const currentPath = Astro.url.pathname;
 
 <nav class="navbar" role="navigation" aria-label="Main navigation">
   <div class="container navbar__inner">
-    <!-- Logo / Brand -->
+    <!-- Logo / Brand — always left-aligned -->
     <a href="/" class="navbar__brand" aria-label="AvinashBlog home">
+      <img src="/media/app_logo.png" alt="AvinashBlog logo" class="navbar__logo-img" width="32" height="32" />
       <span class="navbar__logo-text">AvinashBlog</span>
       <span class="navbar__logo-dot" aria-hidden="true">.</span>
     </a>
@@ -35,7 +36,7 @@ const currentPath = Astro.url.pathname;
       ))}
     </ul>
 
-    <!-- Mobile hamburger -->
+    <!-- Mobile hamburger — always right-aligned -->
     <button
       class="navbar__toggle"
       id="nav-toggle"
@@ -48,25 +49,79 @@ const currentPath = Astro.url.pathname;
       <span class="navbar__toggle-bar"></span>
     </button>
   </div>
-
-  <!-- Mobile menu -->
-  <div class="mobile-menu" id="mobile-menu" aria-hidden="true" role="dialog" aria-label="Mobile navigation">
-    <ul role="list">
-      {navLinks.map(({ href, label }) => (
-        <li>
-          <a
-            href={href}
-            class={`mobile-menu__link ${currentPath === href ? 'mobile-menu__link--active' : ''}`}
-          >
-            {label}
-          </a>
-        </li>
-      ))}
-    </ul>
-  </div>
 </nav>
 
+<!-- Mobile menu — full-height slide-in drawer from the right -->
+<div class="mobile-menu" id="mobile-menu" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Mobile navigation">
+  <!-- Backdrop -->
+  <div class="mobile-menu__backdrop" id="mobile-menu-backdrop" aria-hidden="true"></div>
+
+  <!-- Drawer panel -->
+  <aside class="mobile-menu__panel">
+
+    <!-- Panel header: profile + close -->
+    <div class="mobile-menu__header">
+      <div class="mobile-menu__profile">
+        <img
+          src="/media/profile_pic.png"
+          alt="Avinash's profile"
+          class="mobile-menu__avatar"
+          width="48" height="48"
+          loading="lazy"
+        />
+        <div class="mobile-menu__profile-info">
+          <span class="mobile-menu__profile-name">Avinash Kumar</span>
+          <span class="mobile-menu__profile-role">Software Engineer</span>
+        </div>
+      </div>
+      <button class="mobile-menu__close" id="mobile-menu-close" aria-label="Close navigation menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Divider -->
+    <div class="mobile-menu__divider" aria-hidden="true"></div>
+
+    <!-- Nav links -->
+    <nav aria-label="Mobile navigation links">
+      <ul role="list" class="mobile-menu__list">
+        {navLinks.map(({ href, label }, i) => {
+          const icons: Record<string, string> = {
+            '/': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+            '/search': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>',
+            '/categories': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+            '/about': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+          };
+          const isActive = currentPath === href || (href !== '/' && currentPath.startsWith(href));
+          return (
+            <li style={`--item-delay: ${i * 60}ms`}>
+              <a
+                href={href}
+                class={`mobile-menu__link ${isActive ? 'mobile-menu__link--active' : ''}`}
+              >
+                <span class="mobile-menu__link-icon" set:html={icons[href]} />
+                <span>{label}</span>
+                {isActive && <span class="mobile-menu__link-badge" aria-hidden="true"></span>}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+
+    <!-- Panel footer: branding -->
+    <div class="mobile-menu__footer">
+      <img src="/media/app_logo.png" alt="" class="mobile-menu__footer-logo" width="20" height="20" aria-hidden="true" />
+      <span class="mobile-menu__footer-text">AvinashBlog<span aria-hidden="true">.</span></span>
+    </div>
+  </aside>
+</div>
+
 <style>
+  /* ── Navbar ─────────────────────────────────────── */
   .navbar__inner {
     display: flex;
     align-items: center;
@@ -81,10 +136,17 @@ const currentPath = Astro.url.pathname;
     letter-spacing: -0.02em;
     text-decoration: none;
     display: flex;
-    align-items: baseline;
-    gap: 1px;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;   /* prevent brand from collapsing */
   }
   .navbar__brand:hover { color: var(--ibm-blue-50); text-decoration: none; }
+  .navbar__logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+  }
   .navbar__logo-dot { color: var(--ibm-blue-50); font-size: 1.4em; line-height: 0; }
 
   .navbar__links {
@@ -110,6 +172,7 @@ const currentPath = Astro.url.pathname;
     border-bottom-color: var(--ibm-blue-50);
   }
 
+  /* Hamburger button */
   .navbar__toggle {
     display: none;
     flex-direction: column;
@@ -118,6 +181,7 @@ const currentPath = Astro.url.pathname;
     background: transparent;
     border: none;
     cursor: pointer;
+    margin-left: auto;   /* push to far right in mobile */
   }
   .navbar__toggle-bar {
     display: block;
@@ -128,47 +192,249 @@ const currentPath = Astro.url.pathname;
     transition: transform var(--transition-normal), opacity var(--transition-fast);
   }
 
-  /* Mobile */
-  .mobile-menu {
-    display: none;
-    background: var(--ibm-gray-90);
-    padding: var(--space-4) 0;
-    border-top: 1px solid var(--ibm-gray-80);
-  }
-  .mobile-menu.open { display: block; }
-  .mobile-menu__link {
-    display: block;
-    padding: var(--space-3) var(--space-6);
-    color: var(--ibm-gray-30);
-    font-size: var(--text-base);
-    text-decoration: none;
-    transition: background var(--transition-fast), color var(--transition-fast);
-  }
-  .mobile-menu__link:hover { background: var(--ibm-gray-80); color: var(--ibm-white); text-decoration: none; }
-  .mobile-menu__link--active { color: var(--ibm-white); border-left: 3px solid var(--ibm-blue-50); }
-
+  /* On mobile: logo stays left, hamburger appears right */
   @media (max-width: 768px) {
     .navbar__links { display: none; }
     .navbar__toggle { display: flex; }
+    /* Ensure brand is always left, toggle always right */
+    .navbar__inner {
+      justify-content: space-between;
+    }
+  }
+
+  /* ── Mobile overlay menu ─────────────────────────── */
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    pointer-events: none;
+  }
+  .mobile-menu.open {
+    display: block;
+    pointer-events: auto;
+  }
+
+  /* Semi-transparent backdrop */
+  .mobile-menu__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: fade-in 0.2s ease both;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* Slide-in panel from right — full height */
+  .mobile-menu__panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(300px, 82vw);
+    background: var(--ibm-gray-100);
+    border-left: 1px solid var(--ibm-gray-80);
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slide-in 0.28s cubic-bezier(0.42, 0, 0.58, 1) both;
+    box-shadow: -8px 0 32px rgba(0,0,0,0.4);
+  }
+  @keyframes slide-in {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+  }
+
+  /* Header: avatar + name + close button */
+  .mobile-menu__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-5) var(--space-4);
+    background: linear-gradient(135deg, var(--ibm-gray-90) 0%, #1a2a3a 100%);
+  }
+
+  .mobile-menu__profile {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  .mobile-menu__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--ibm-blue-50);
+    flex-shrink: 0;
+  }
+
+  .mobile-menu__profile-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .mobile-menu__profile-name {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--ibm-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mobile-menu__profile-role {
+    font-size: var(--text-xs);
+    color: var(--ibm-blue-40);
+    white-space: nowrap;
+  }
+
+  /* Close button */
+  .mobile-menu__close {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 50%;
+    color: var(--ibm-gray-30);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+  }
+  .mobile-menu__close:hover {
+    background: rgba(255,255,255,0.15);
+    color: var(--ibm-white);
+  }
+
+  .mobile-menu__divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ibm-blue-60), transparent);
+    margin: 0;
+  }
+
+  /* Nav links list */
+  .mobile-menu__list {
+    list-style: none;
+    padding: var(--space-3) 0;
+    margin: 0;
+    flex: 1;
+  }
+
+  .mobile-menu__list li {
+    animation: link-appear 0.3s ease var(--item-delay, 0ms) both;
+  }
+  @keyframes link-appear {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .mobile-menu__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    color: var(--ibm-gray-20);
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+    position: relative;
+  }
+  .mobile-menu__link:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--ibm-white);
+    border-left-color: var(--ibm-gray-60);
+    text-decoration: none;
+  }
+  .mobile-menu__link--active {
+    color: var(--ibm-white);
+    border-left-color: var(--ibm-blue-50);
+    background: rgba(15, 98, 254, 0.1);
+  }
+
+  .mobile-menu__link-icon {
+    display: flex;
+    align-items: center;
+    color: var(--ibm-blue-40);
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+  .mobile-menu__link--active .mobile-menu__link-icon {
+    opacity: 1;
+    color: var(--ibm-blue-40);
+  }
+
+  /* Active indicator dot */
+  .mobile-menu__link-badge {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ibm-blue-50);
+    margin-left: auto;
+  }
+
+  /* Footer branding */
+  .mobile-menu__footer {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--ibm-gray-80);
+    margin-top: auto;
+  }
+  .mobile-menu__footer-logo {
+    object-fit: contain;
+    opacity: 0.7;
+  }
+  .mobile-menu__footer-text {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--ibm-gray-50);
+    letter-spacing: -0.01em;
+  }
+  .mobile-menu__footer-text span {
+    color: var(--ibm-blue-50);
   }
 </style>
 
 <script>
-  const toggle = document.getElementById('nav-toggle');
-  const menu = document.getElementById('mobile-menu');
+  const toggle  = document.getElementById('nav-toggle');
+  const menu    = document.getElementById('mobile-menu');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
+  const closeBtn = document.getElementById('mobile-menu-close');
+
+  function openMenu() {
+    menu?.classList.add('open');
+    toggle?.setAttribute('aria-expanded', 'true');
+    menu?.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMenu() {
+    menu?.classList.remove('open');
+    toggle?.setAttribute('aria-expanded', 'false');
+    menu?.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
 
   toggle?.addEventListener('click', () => {
-    const isOpen = menu?.classList.toggle('open');
-    toggle.setAttribute('aria-expanded', String(isOpen));
-    menu?.setAttribute('aria-hidden', String(!isOpen));
+    menu?.classList.contains('open') ? closeMenu() : openMenu();
   });
 
-  // Close on outside click
-  document.addEventListener('click', (e) => {
-    if (!toggle?.contains(e.target as Node) && !menu?.contains(e.target as Node)) {
-      menu?.classList.remove('open');
-      toggle?.setAttribute('aria-expanded', 'false');
-      menu?.setAttribute('aria-hidden', 'true');
-    }
+  backdrop?.addEventListener('click', closeMenu);
+  closeBtn?.addEventListener('click', closeMenu);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menu?.classList.contains('open')) closeMenu();
   });
 </script>

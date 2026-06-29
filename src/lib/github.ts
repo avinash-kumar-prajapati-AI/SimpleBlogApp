@@ -232,6 +232,9 @@ export async function fetchDrafts(): Promise<Set<string>> {
 }
 
 /** Recursively download media files from the GitHub repository to the local public/media directory */
+/** Only sync the media/images subtree (article thumbnails).
+ *  Static assets (app_logo, profile_pic, favicon) are committed directly to public/.
+ *  media/docs is fetched at runtime via the GitHub API — skip it here. */
 export async function downloadMedia(): Promise<void> {
   const config = await getConfig();
   if (!config.token) {
@@ -239,13 +242,13 @@ export async function downloadMedia(): Promise<void> {
     return;
   }
   const { join } = await import("node:path");
-  const localMediaDir = join(process.cwd(), "public", "media");
-  console.log(`[GitHub API] Downloading media folder to local ${localMediaDir}...`);
+  const localImagesDir = join(process.cwd(), "public", "media", "images");
+  console.log(`[GitHub API] Syncing article thumbnails to ${localImagesDir}...`);
   try {
-    await downloadDir("media", localMediaDir);
-    console.log("[GitHub API] Media assets downloaded successfully!");
+    await downloadDir("media/images", localImagesDir);
+    console.log("[GitHub API] Article thumbnails synced successfully!");
   } catch (err) {
-    console.error("[GitHub API] Failed to download media assets:", err);
+    console.error("[GitHub API] Failed to sync thumbnails:", err);
   }
 }
 

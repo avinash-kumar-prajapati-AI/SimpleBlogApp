@@ -181,7 +181,7 @@ const currentPath = Astro.url.pathname;
     background: transparent;
     border: none;
     cursor: pointer;
-    margin-left: auto;   /* push to far right in mobile */
+    /* No margin-left:auto — space-between on the parent handles this */
   }
   .navbar__toggle-bar {
     display: block;
@@ -196,8 +196,9 @@ const currentPath = Astro.url.pathname;
   @media (max-width: 768px) {
     .navbar__links { display: none; }
     .navbar__toggle { display: flex; }
-    /* Ensure brand is always left, toggle always right */
+    /* Force inner to stretch full width so space-between works */
     .navbar__inner {
+      width: 100%;
       justify-content: space-between;
     }
   }

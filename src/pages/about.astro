@@ -20,6 +20,19 @@ try {
 }
 
 const { personal, social, experience, projects, education, skills, certificates, achievements } = profile;
+
+/**
+ * Profile pic resolution order:
+ * 1. Synced from Blog-space → /media/images/images/profile_pic.png (auto-updates when repo changes)
+ * 2. personal.avatar from profile.json
+ * 3. Committed static fallback → /media/profile_pic.png
+ */
+const profilePic =
+  '/media/images/images/profile_pic.png';
+const profilePicFallback =
+  personal.avatar
+    ? (personal.avatar.startsWith('/') ? personal.avatar : '/' + personal.avatar)
+    : '/media/profile_pic.png';
 ---
 
 <BaseLayout
@@ -28,36 +41,47 @@ const { personal, social, experience, projects, education, skills, certificates,
   ogType="website"
 >
   <div class="container about-page">
-    <!-- Author identity (E-E-A-T) -->
-    <section class="about-hero" aria-label="Author profile">
-      <div class="about-hero__content">
-        {personal.avatar && (
-          <img
-            src={personal.avatar.startsWith('/') ? personal.avatar : '/' + personal.avatar}
-            alt={`Photo of ${personal.name}`}
-            width="120" height="120"
-            class="about-hero__avatar"
-            loading="eager"
-          />
-        )}
-        <div class="about-hero__info">
-          <h1 class="about-hero__name">{personal.name}</h1>
-          <p class="about-hero__title">{personal.title}</p>
-          {personal.location && <p class="about-hero__location">📍 {personal.location}</p>}
-          <p class="about-hero__bio">{personal.bio}</p>
-          <div class="about-hero__socials">
-            {social.map(({ platform, url }) => (
-              <a href={url} target="_blank" rel="noopener noreferrer" class="btn btn-ghost about-social-btn">
-                {platform}
-              </a>
-            ))}
-            {personal.email && (
-              <a href={`mailto:${personal.email}`} class="btn btn-ghost about-social-btn">Email</a>
-            )}
-          </div>
+  <!-- Author identity (E-E-A-T) -->
+  <section class="about-hero" aria-label="Author profile">
+    <div class="about-hero__card">
+      <!-- Avatar column -->
+      <div class="about-hero__avatar-wrap">
+        <div class="about-hero__avatar-ring" aria-hidden="true"></div>
+        <img
+          src={profilePic}
+          alt={`Photo of ${personal.name}`}
+          class="about-hero__avatar"
+          width="180" height="180"
+          loading="eager"
+          onerror={`this.onerror=null;this.src='${profilePicFallback}'`}
+        />
+        <!-- Decorative badge -->
+        <span class="about-hero__badge" aria-label="Available">
+          <span class="about-hero__badge-dot" aria-hidden="true"></span>
+          Available
+        </span>
+      </div>
+
+      <!-- Info column -->
+      <div class="about-hero__info">
+        <p class="about-hero__eyebrow">Hi, I'm</p>
+        <h1 class="about-hero__name">{personal.name}</h1>
+        <p class="about-hero__title">{personal.title}</p>
+        {personal.location && <p class="about-hero__location">📍 {personal.location}</p>}
+        <p class="about-hero__bio">{personal.bio}</p>
+        <div class="about-hero__socials">
+          {social.map(({ platform, url }) => (
+            <a href={url} target="_blank" rel="noopener noreferrer" class="btn btn-ghost about-social-btn">
+              {platform}
+            </a>
+          ))}
+          {personal.email && (
+            <a href={`mailto:${personal.email}`} class="btn btn-ghost about-social-btn">Email</a>
+          )}
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
     <!-- About the Blog -->
     <section class="about-section" aria-labelledby="blog-purpose-heading">
@@ -207,25 +231,142 @@ const { personal, social, experience, projects, education, skills, certificates,
 
   /* Hero */
   .about-hero {
-    margin-bottom: var(--space-12);
-    padding-bottom: var(--space-12);
-    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--space-16);
   }
-  .about-hero__content { display: flex; gap: var(--space-8); align-items: flex-start; flex-wrap: wrap; }
+  .about-hero__card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-10);
+    align-items: center;
+    background: linear-gradient(135deg, var(--ibm-gray-90) 0%, #1a2a3a 100%);
+    border: 1px solid var(--ibm-gray-80);
+    border-radius: var(--radius-lg);
+    padding: var(--space-10);
+    position: relative;
+    overflow: hidden;
+  }
+  /* Decorative grid overlay */
+  .about-hero__card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--ibm-gray-80) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ibm-gray-80) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.25;
+    pointer-events: none;
+  }
+
+  /* Avatar */
+  .about-hero__avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 180px;
+    height: 180px;
+    z-index: 1;
+  }
+  .about-hero__avatar-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: conic-gradient(var(--ibm-blue-50), var(--ibm-blue-40), var(--ibm-blue-60), var(--ibm-blue-50));
+    animation: spin 6s linear infinite;
+    z-index: 0;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
   .about-hero__avatar {
-    width: 120px; height: 120px;
+    position: relative;
+    width: 180px;
+    height: 180px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid var(--color-primary);
-    flex-shrink: 0;
+    object-position: top;
+    border: 4px solid var(--ibm-gray-90);
+    z-index: 1;
+    display: block;
   }
-  .about-hero__info { flex: 1; min-width: 240px; }
-  .about-hero__name { font-size: var(--text-4xl); font-weight: var(--weight-bold); margin-bottom: var(--space-1); }
-  .about-hero__title { font-size: var(--text-xl); color: var(--color-primary); font-weight: var(--weight-medium); margin-bottom: var(--space-2); }
-  .about-hero__location { font-size: var(--text-sm); color: var(--color-text-secondary); margin-bottom: var(--space-4); }
-  .about-hero__bio { color: var(--color-text-secondary); line-height: var(--leading-relaxed); margin-bottom: var(--space-5); }
+  .about-hero__badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--ibm-gray-90);
+    border: 1px solid var(--ibm-gray-70);
+    border-radius: 99px;
+    padding: 3px 10px 3px 6px;
+    font-size: 11px;
+    font-weight: var(--weight-medium);
+    color: var(--ibm-gray-10);
+    z-index: 2;
+  }
+  .about-hero__badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #42be65;  /* IBM green — active status */
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+  }
+
+  /* Info */
+  .about-hero__info { position: relative; z-index: 1; }
+  .about-hero__eyebrow {
+    font-size: var(--text-sm);
+    color: var(--ibm-blue-40);
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: var(--space-1);
+  }
+  .about-hero__name {
+    font-size: clamp(var(--text-3xl), 5vw, var(--text-4xl));
+    font-weight: var(--weight-bold);
+    margin-bottom: var(--space-2);
+    color: var(--ibm-white);
+    line-height: 1.1;
+  }
+  .about-hero__title {
+    font-size: var(--text-lg);
+    color: var(--ibm-blue-50);
+    font-weight: var(--weight-medium);
+    margin-bottom: var(--space-2);
+  }
+  .about-hero__location {
+    font-size: var(--text-sm);
+    color: var(--ibm-gray-40);
+    margin-bottom: var(--space-4);
+  }
+  .about-hero__bio {
+    color: var(--ibm-gray-30);
+    line-height: var(--leading-relaxed);
+    margin-bottom: var(--space-6);
+    max-width: 480px;
+  }
   .about-hero__socials { display: flex; flex-wrap: wrap; gap: var(--space-2); }
   .about-social-btn { font-size: var(--text-sm); padding: 0.375rem var(--space-3); }
+
+  /* Responsive: stack avatar above info on small screens */
+  @media (max-width: 640px) {
+    .about-hero__card {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
+      padding: var(--space-6);
+      gap: var(--space-6);
+    }
+    .about-hero__bio { max-width: 100%; }
+    .about-hero__socials { justify-content: center; }
+    .about-hero__avatar-wrap { width: 140px; height: 140px; }
+    .about-hero__avatar { width: 140px; height: 140px; }
+  }
 
   /* Sections */
   .about-section { margin-bottom: var(--space-12); }

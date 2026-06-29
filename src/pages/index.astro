@@ -91,31 +91,50 @@ const recentArticles = articles
   {featuredArticle && (
     <section class="container featured-section" aria-label="Featured article">
       <h2 class="section-heading">Featured</h2>
-      <a href={`/articles/${featuredArticle.category}/${featuredArticle.slug}`} class="featured-card card">
+      <!-- Outer div, not <a>, to avoid nested anchors (TagPill renders its own <a>) -->
+      <div class="featured-card card" data-href={`/articles/${featuredArticle.category}/${featuredArticle.slug}`}>
         <div class="featured-card__body">
           <div class="featured-card__meta">
-            <TagPill label={featuredArticle.category} type="category" />
+            <!-- Render category as a plain span pill — can't nest <a> inside <a> -->
+            <span class={`tag-pill tag-pill--category`} aria-label={`Category: ${featuredArticle.category}`}>
+              {featuredArticle.category}
+            </span>
             <span class="featured-card__date">
               {new Date(featuredArticle.frontmatter.modified_date).toLocaleDateString('en-US', {
                 year: 'numeric', month: 'long', day: 'numeric',
               })}
             </span>
           </div>
-          <h3 class="featured-card__title">{featuredArticle.frontmatter.title}</h3>
+          <h3 class="featured-card__title">
+            <a href={`/articles/${featuredArticle.category}/${featuredArticle.slug}`} class="featured-card__title-link">
+              {featuredArticle.frontmatter.title}
+            </a>
+          </h3>
           <p class="featured-card__desc">{featuredArticle.frontmatter.description}</p>
-          <span class="btn btn-primary featured-card__cta">Read Article →</span>
+          <a href={`/articles/${featuredArticle.category}/${featuredArticle.slug}`} class="btn btn-primary featured-card__cta" tabindex="-1" aria-hidden="true">Read Article →</a>
         </div>
-        {featuredArticle.frontmatter.thumbnail && (
-          <div class="featured-card__thumb">
-            <img
-              src={featuredArticle.frontmatter.thumbnail.startsWith('/') ? featuredArticle.frontmatter.thumbnail : '/' + featuredArticle.frontmatter.thumbnail}
-              alt={featuredArticle.frontmatter.title}
-              width="800" height="450"
-              loading="eager"
-            />
-          </div>
-        )}
-      </a>
+        <a href={`/articles/${featuredArticle.category}/${featuredArticle.slug}`} class="featured-card__thumb-link" tabindex="-1" aria-hidden="true">
+          {featuredArticle.frontmatter.thumbnail ? (
+            <div class="featured-card__thumb">
+              <img
+                src={featuredArticle.frontmatter.thumbnail.startsWith('/') ? featuredArticle.frontmatter.thumbnail : '/' + featuredArticle.frontmatter.thumbnail}
+                alt={featuredArticle.frontmatter.title}
+                width="800" height="450"
+                loading="eager"
+                onerror="this.parentElement.parentElement.style.display='none'"
+              />
+            </div>
+          ) : (
+            <div class="featured-card__thumb featured-card__thumb--placeholder" aria-hidden="true">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+          )}
+        </a>
+      </div>
     </section>
   )}
 
@@ -185,6 +204,20 @@ const recentArticles = articles
   )}
 
 </BaseLayout>
+
+<script>
+  // Make the whole featured-card div navigable when clicking anywhere on it
+  // (title link handles direct clicks; this catches clicks on description/body areas)
+  document.querySelectorAll<HTMLDivElement>('.featured-card[data-href]').forEach((card) => {
+    card.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      // Don't double-navigate if user clicked a real <a> inside the card
+      if (target.closest('a')) return;
+      const href = card.dataset.href;
+      if (href) window.location.href = href;
+    });
+  });
+</script>
 
 <style>
   /* ── Hero ──────────────────────────────────────── */
@@ -264,15 +297,14 @@ const recentArticles = articles
   .featured-card {
     display: grid;
     grid-template-columns: 1fr;
-    text-decoration: none;
     color: inherit;
     overflow: hidden;
     animation: card-enter 0.5s cubic-bezier(0.42, 0, 0.58, 1) 0.1s both;
+    cursor: pointer;
   }
   @media (min-width: 768px) {
     .featured-card { grid-template-columns: 1fr 1fr; }
   }
-  .featured-card:hover { text-decoration: none; }
 
   @keyframes card-enter {
     from { opacity: 0; transform: translateY(20px); }
@@ -288,15 +320,40 @@ const recentArticles = articles
   }
   .featured-card__meta { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
   .featured-card__date { font-size: var(--text-sm); color: var(--color-text-secondary); }
-  .featured-card__title { font-size: var(--text-2xl); font-weight: var(--weight-bold); line-height: var(--leading-snug); }
+  .featured-card__title {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-snug);
+    margin: 0;
+  }
+  .featured-card__title-link {
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+  .featured-card__title-link:hover { color: var(--color-primary); }
   .featured-card__desc { color: var(--color-text-secondary); line-height: var(--leading-relaxed); }
   .featured-card__cta { align-self: flex-start; }
 
-  .featured-card__thumb { overflow: hidden; }
+  .featured-card__thumb-link {
+    display: block;
+    overflow: hidden;
+    text-decoration: none;
+  }
+  .featured-card__thumb { overflow: hidden; height: 100%; }
+  .featured-card__thumb--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+    background: var(--ibm-gray-10);
+    color: var(--ibm-gray-40);
+  }
   .featured-card__thumb img {
     width: 100%; height: 100%;
     object-fit: cover;
     transition: transform 0.4s ease-out;
+    display: block;
   }
   .featured-card:hover .featured-card__thumb img { transform: scale(1.03); }
 

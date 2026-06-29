@@ -82,6 +82,7 @@ export interface Certificate {
 export interface Achievement {
   title: string;
   description: string;
+  links?: { label: string; url: string; open_in_new_tab?: boolean; is_visible?: boolean }[];
   is_visible?: boolean;
 }
 

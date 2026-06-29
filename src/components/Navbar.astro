@@ -2,6 +2,10 @@
 /**
  * Navbar.astro — sticky IBM-styled navigation bar with polished mobile drawer
  */
+import { fetchFileContent, fetchJson } from '../lib/github';
+import type { Profile } from '../lib/resumeLoader';
+import { FALLBACK_PROFILE } from '../lib/resumeLoader';
+
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/search', label: 'Search' },
@@ -10,6 +14,20 @@ const navLinks = [
 ];
 
 const currentPath = Astro.url.pathname;
+
+// Fetch active profile to show correct name & role in the mobile sidebar
+let profileName = 'Avinash Kumar';
+let profileRole = 'Software Engineer';
+try {
+  const rawActive = await fetchFileContent('media/docs/active-role.txt');
+  const activeLine = rawActive.split('\n').map(l => l.trim()).find(l => l.startsWith('active:'));
+  const activeRole = activeLine ? activeLine.split(':')[1].trim() : 'software-engineer';
+  const p = await fetchJson<Profile>(`media/docs/${activeRole}/profile.json`);
+  profileName = p.personal.name ?? profileName;
+  profileRole = p.personal.role ?? p.personal.title ?? profileRole;
+} catch (_) {
+  // silently use fallback strings above
+}
 ---
 
 <nav class="navbar" role="navigation" aria-label="Main navigation">
@@ -70,8 +88,8 @@ const currentPath = Astro.url.pathname;
           loading="lazy"
         />
         <div class="mobile-menu__profile-info">
-          <span class="mobile-menu__profile-name">Avinash Kumar</span>
-          <span class="mobile-menu__profile-role">Software Engineer</span>
+          <span class="mobile-menu__profile-name">{profileName}</span>
+          <span class="mobile-menu__profile-role">{profileRole}</span>
         </div>
       </div>
       <button class="mobile-menu__close" id="mobile-menu-close" aria-label="Close navigation menu">

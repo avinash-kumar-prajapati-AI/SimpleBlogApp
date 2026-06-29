@@ -14,6 +14,8 @@ export interface ArticleFrontmatter {
   external_links?: Array<{ label: string; url: string }>;
   thumbnail?: string;
   draft?: boolean;
+  featured?: boolean;
+  features?: boolean;
 }
 
 export interface Article {

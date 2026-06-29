@@ -53,9 +53,7 @@ try {
 const featuredArticle = articles.find(
   (a) =>
     a.frontmatter.featured === true ||
-    a.frontmatter.features === true ||
-    a.frontmatter.featured === "true" ||
-    a.frontmatter.features === "true"
+    a.frontmatter.featured === "true"
 ) || articles[0];
 
 const recentArticles = articles

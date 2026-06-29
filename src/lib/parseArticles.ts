@@ -15,7 +15,6 @@ export interface ArticleFrontmatter {
   thumbnail?: string;
   draft?: boolean;
   featured?: boolean;
-  features?: boolean;
 }
 
 export interface Article {
